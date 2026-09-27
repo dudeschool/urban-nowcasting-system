@@ -1,4 +1,4 @@
-"""
+﻿"""
 Module E: Flood-Safe Navigation & Emergency Routing API
 - Evaluates city road graph with dynamic edge penalties based on predicted flood depth
 - Computes flood-resilient routes using Dijkstra / A*
@@ -29,19 +29,19 @@ VEHICLE_THRESHOLDS = {
 
 # Pre-defined navigation intersections across the ward
 INTERSECTIONS = {
-    "N_HOSPITAL": {"name": "Sion Hospital North Gate", "coords": [19.0768, 72.8770]},
-    "N_LBS": {"name": "LBS Marg North Junction", "coords": [19.0775, 72.8765]},
-    "PARK_BLVD": {"name": "Park Boulevard West", "coords": [19.0740, 72.8770]},
-    "EAST_RIDGE_N": {"name": "East Ridge North", "coords": [19.0760, 72.8840]},
-    "MARKET_HUB": {"name": "Gandhi Market Center", "coords": [19.0705, 72.8805]},
-    "EXPRESSWAY_INT": {"name": "Sion-Bandra Link Interchange", "coords": [19.0675, 72.8770]},
-    "SUBWAY_NORTH": {"name": "Railway Underpass North Portal", "coords": [19.0660, 72.8755]},
-    "SUBWAY_SOUTH": {"name": "Railway Underpass South Portal", "coords": [19.0625, 72.8785]},
-    "STATION_WEST": {"name": "Railway Station West Gate", "coords": [19.0620, 72.8773]},
-    "STATION_EAST": {"name": "Station Approach East", "coords": [19.0610, 72.8850]},
-    "RIVER_CANAL_W": {"name": "Mithi Canal West", "coords": [19.0650, 72.8728]},
-    "SOUTH_TERMINAL": {"name": "Kurla South Terminal", "coords": [19.0585, 72.8775]},
-    "EAST_RIDGE_S": {"name": "East Ridge South", "coords": [19.0590, 72.8855]}
+    "N_HOSPITAL": {"name": "Gurgaon Medical Centre North Gate", "coords": [28.4674, 77.0239]},
+    "N_LBS": {"name": "Golf Course Road North Junction", "coords": [28.4680, 77.0234]},
+    "PARK_BLVD": {"name": "Park Boulevard West", "coords": [28.4649, 77.0239]},
+    "EAST_RIDGE_N": {"name": "East Ridge North", "coords": [28.4667, 77.0302]},
+    "MARKET_HUB": {"name": "Sector 29 Market Center", "coords": [28.4617, 77.0270]},
+    "EXPRESSWAY_INT": {"name": "Golf Course Road Link Interchange", "coords": [28.4590, 77.0239]},
+    "SUBWAY_NORTH": {"name": "Metro Underpass North Portal", "coords": [28.4577, 77.0226]},
+    "SUBWAY_SOUTH": {"name": "Metro Underpass South Portal", "coords": [28.4546, 77.0253]},
+    "STATION_WEST": {"name": "Rapid Metro Station West Gate", "coords": [28.4541, 77.0242]},
+    "STATION_EAST": {"name": "Metro Station Approach East", "coords": [28.4532, 77.0311]},
+    "RIVER_CANAL_W": {"name": "Najafgarh Drain West", "coords": [28.4568, 77.0201]},
+    "SOUTH_TERMINAL": {"name": "Sector 48 South Terminal", "coords": [28.4509, 77.0244]},
+    "EAST_RIDGE_S": {"name": "East Ridge South", "coords": [28.4514, 77.0316]}
 }
 
 # Road graph topology connecting intersections
@@ -196,3 +196,4 @@ def get_dual_mode_routes(start_node: str, end_node: str, road_depths: Dict[str, 
         "delay_commuter_min": delay_commuter,
         "intersections": INTERSECTIONS
     }
+

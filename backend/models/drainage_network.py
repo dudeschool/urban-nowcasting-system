@@ -1,4 +1,4 @@
-"""
+﻿"""
 Module C: 1D Drainage Hydraulic Network Engine & Surcharge Calculator
 - Models 1D flow through manholes and conduit pipes
 - Calculates pipe capacity via Manning's formula and Hydraulic Grade Line (HGL)
@@ -140,7 +140,7 @@ class DrainageNetworkEngine:
             pipes = downstream_pipes[nid]
             
             if node["is_outfall"] or not pipes:
-                # Outfall discharges directly to receiving water body (Mithi River / Canal)
+                # Outfall discharges directly to receiving water body (Najafgarh Drain / Canal)
                 continue
                 
             total_pipe_cap = sum(self.conduits[pid]["q_capacity_m3s"] for pid in pipes)
@@ -229,3 +229,4 @@ class DrainageNetworkEngine:
             "total_surcharge_volume_rate_m3s": round(sum(ev["surcharge_m3s"] for ev in surcharge_events), 2),
             "surcharging_nodes_count": len(surcharge_events)
         }, surcharge_events
+

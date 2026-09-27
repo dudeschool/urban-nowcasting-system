@@ -18,7 +18,7 @@ const layers = {
   route: L.layerGroup()
 };
 
-function initMap(center = [19.0680, 72.8800], zoom = 14.5) {
+function initMap(center = [28.4595, 77.0266], zoom = 13.5) {
   map = L.map('map', {
     center: center,
     zoom: zoom,

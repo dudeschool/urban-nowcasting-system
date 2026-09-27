@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setupTabs() {
-  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabBtns = document.querySelectorAll('.tab-btn, .sidebar-nav-btn');
   const tabContents = document.querySelectorAll('.tab-content');
 
   tabBtns.forEach(btn => {

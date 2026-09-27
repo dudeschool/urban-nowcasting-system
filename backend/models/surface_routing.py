@@ -1,4 +1,4 @@
-"""
+﻿"""
 Module B: 2D Surface Runoff & Cellular-Automata (CA) Diffusive-Wave Router
 - Ingests DEM topography & SCS-CN imperviousness grid
 - Generates surface runoff per cell from precipitation intensity
@@ -111,7 +111,7 @@ class SurfaceRoutingEngine:
             # Apply flux with safety clamp (cannot lose more water than present)
             self.water_depth = np.maximum(0.0, self.water_depth + net_flux * 0.5)
             
-            # Edge outfall boundary condition: water on extreme West edge drains out to sea/Mithi
+            # Edge outfall boundary condition: water on extreme West edge drains out to sea/Najafgarh Drain
             self.water_depth[:, 0:2] *= 0.88
             self.water_depth[34:36, :] *= 0.88
 
@@ -198,3 +198,4 @@ class SurfaceRoutingEngine:
                         "category": category
                     })
         return polygons
+
