@@ -1,5 +1,5 @@
 """
-HYDRO-NOWCAST: Urban Flood Nowcasting System (SIH 2026 - MoES / NCMRWF)
+JalRakshak: Urban Flood Nowcasting System (SIH 2026 - MoES / NCMRWF)
 Single-click launcher script.
 Runs the FastAPI server with coupled simulation, dynamic routing, and web GIS dashboard.
 """
@@ -9,7 +9,7 @@ import uvicorn
 
 def main():
     print("=" * 76)
-    print("  HYDRO-NOWCAST | Urban Flood Nowcasting System (Drainage-Rainfall Coupling)")
+    print("  JALRAKSHAK | Urban Flood Nowcasting System (Drainage-Rainfall Coupling)")
     print("  SIH 2026 Solution Design - MoES / NCMRWF (Disaster Management & Software)")
     print("=" * 76)
     print("  [+] Module A: Rainfall Nowcast Engine (IMD Radar Reflectivity -> Z-R QPE)")

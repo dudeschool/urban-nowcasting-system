@@ -1,4 +1,4 @@
-# HYDRO-NOWCAST | Urban Flood Nowcasting System
+# JalRakshak | Urban Flood Nowcasting System
 
 > **SIH 2026 Solution Design — Ministry of Earth Sciences (MoES) / NCMRWF**  
 > Dynamic two-way coupled 1D/2D drainage-rainfall nowcasting platform with sub-street resolution and flood-safe emergency navigation.
@@ -7,7 +7,7 @@
 
 ## 🌊 Overview
 
-**HYDRO-NOWCAST** is an advanced urban flood modeling and decision support platform engineered to predict street-level inundation during extreme convective precipitation events in real-time. By dynamically coupling radar-derived quantitative precipitation estimates with surface overland hydraulics and subsurface storm sewer networks, the system delivers actionable nowcasts and resilient routing paths before flash floods paralyze urban centers.
+**JalRakshak** is an advanced urban flood modeling and decision support platform engineered to predict street-level inundation during extreme convective precipitation events in real-time. By dynamically coupling radar-derived quantitative precipitation estimates with surface overland hydraulics and subsurface storm sewer networks, the system delivers actionable nowcasts and resilient routing paths before flash floods paralyze urban centers.
 
 ---
 

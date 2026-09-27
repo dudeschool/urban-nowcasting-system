@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HYDRO-NOWCAST | Urban Flood Nowcasting System (MoES / NCMRWF)</title>
+  <title>JalRakshak — Urban Flood Nowcasting &amp; Emergency Routing</title>
   
   <!-- Modern Typography: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,23 +14,30 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   
   <!-- Application CSS -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=logo-fit-2">
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Chart.js for Hyetographs & Depth Profiles -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dark-theme">
+<body class="light-theme">
+  <video class="bg-ambient-video" autoplay loop muted playsinline aria-hidden="true">
+    <source src="/static/videos/candysfiolet_pindown.io_1790539669.mp4" type="video/mp4">
+  </video>
+  <div class="app-shell">
   <!-- Top Navigation / Command Bar -->
   <header class="top-bar">
     <div class="brand-container">
       <div class="brand-logo">
-        <i data-lucide="waves" class="logo-icon pulse-blue"></i>
+        <svg class="logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2C9.2 6.1 5.5 9.7 5.5 14a6.5 6.5 0 0 0 13 0C18.5 9.7 14.8 6.1 12 2Z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M9.5 15.2c.5 1.5 1.4 2.3 2.7 2.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
       </div>
       <div class="brand-text">
-        <h1>HYDRO-NOWCAST <span class="badge-sih">SIH 2026 | MoES - NCMRWF</span></h1>
-        <p class="subtitle">Coupled Drainage–Rainfall Urban Flood Nowcasting & Emergency Routing Platform</p>
+        <h1>JALRAKSHAK <span class="badge-sih">SIH 2026 | MoES - NCMRWF</span></h1>
+        <p class="subtitle">Coupled Drainage–Rainfall Urban Flood Nowcasting &amp; Emergency Routing Platform</p>
       </div>
     </div>
 
@@ -38,7 +45,7 @@
     <div class="system-status-hud">
       <div class="status-indicator active">
         <span class="pulse-dot green"></span>
-        <span class="label">IMD DWR Radar: <strong id="radarStatus">LIVE (Santacruz 250m)</strong></span>
+        <span class="label">IMD DWR Radar: <strong id="radarStatus">LIVE (NCR 250m)</strong></span>
       </div>
       <div class="status-indicator">
         <span class="pulse-dot blue"></span>
@@ -46,7 +53,7 @@
       </div>
       <div class="status-indicator">
         <i data-lucide="map-pin" class="status-mini-icon"></i>
-        <span class="label">Ward: <strong>Kurla-Sion Pilot Basin</strong></span>
+        <span class="label">Ward: <strong>Sector 29-48 Pilot Basin</strong></span>
       </div>
     </div>
 
@@ -68,6 +75,27 @@
 
   <!-- Main Workspace Layout -->
   <main class="workspace-layout">
+    <aside class="left-sidebar" aria-label="Primary navigation">
+      <div class="sidebar-brand brand-container">
+        <div class="brand-logo">
+          <svg class="logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2C9.2 6.1 5.5 9.7 5.5 14a6.5 6.5 0 0 0 13 0C18.5 9.7 14.8 6.1 12 2Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.5 15.2c.5 1.5 1.4 2.3 2.7 2.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h2>JALRAKSHAK</h2>
+          <p>Command Center</p>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-btn active" data-tab="nowcast"><i data-lucide="activity"></i><span>Live Nowcast</span></button>
+        <button class="sidebar-nav-btn" data-tab="routing"><i data-lucide="navigation"></i><span>Safe Routing</span></button>
+        <button class="sidebar-nav-btn" data-tab="backtest"><i data-lucide="check-circle-2"></i><span>Validation</span></button>
+        <button class="sidebar-nav-btn" data-tab="editor"><i data-lucide="wrench"></i><span>ULB Drains</span></button>
+      </nav>
+    </aside>
+
     <!-- Map Viewport -->
     <section class="map-section">
       <div id="map" class="main-map"></div>
@@ -253,21 +281,21 @@
           <div class="form-group">
             <label for="routeOrigin"><i data-lucide="map-pin"></i> Origin Point:</label>
             <select id="routeOrigin" class="styled-select">
-              <option value="N_HOSPITAL" selected>Sion Hospital North Gate</option>
-              <option value="N_LBS">LBS Marg North Junction</option>
-              <option value="PARK_BLVD">Park Boulevard West</option>
+              <option value="N_HOSPITAL" selected>Gurgaon Medical Centre North Gate</option>
+              <option value="N_LBS">Golf Course Road North Junction</option>
+              <option value="PARK_BLVD">Park View Boulevard West</option>
               <option value="EAST_RIDGE_N">East Ridge North</option>
-              <option value="RIVER_CANAL_W">Mithi Canal West</option>
+              <option value="RIVER_CANAL_W">Najafgarh Drain West</option>
             </select>
           </div>
 
           <div class="form-group">
             <label for="routeDestination"><i data-lucide="flag"></i> Destination:</label>
             <select id="routeDestination" class="styled-select">
-              <option value="SOUTH_TERMINAL" selected>Kurla South Terminal</option>
-              <option value="STATION_WEST">Railway Station West Gate</option>
-              <option value="STATION_EAST">Station Approach East</option>
-              <option value="MARKET_HUB">Gandhi Market Center</option>
+              <option value="SOUTH_TERMINAL" selected>Sector 48 South Terminal</option>
+              <option value="STATION_WEST">Rapid Metro Station West Gate</option>
+              <option value="STATION_EAST">Metro Station Approach East</option>
+              <option value="MARKET_HUB">Sector 29 Market Center</option>
               <option value="EAST_RIDGE_S">East Ridge South</option>
             </select>
           </div>
@@ -333,7 +361,7 @@
         <div class="backtest-selector-card">
           <label for="backtestEventSelect">Select Historical Benchmark:</label>
           <select id="backtestEventSelect" class="styled-select">
-            <option value="mumbai_2005" selected>Mumbai Cloudburst Deluge (26-July Incident Replay)</option>
+            <option value="gurgaon_2023" selected>Gurgaon Cloudburst Deluge (July Incident Replay)</option>
             <option value="chennai_2015">Chennai Urban Micro-Burst (December 2015 Analogue)</option>
           </select>
           <button id="runBacktestBtn" class="btn btn-primary btn-block" style="margin-top: 10px;">
@@ -468,6 +496,7 @@
       </div>
     </aside>
   </main>
+  </div>
 
   <!-- Inspection Modal for Map Clicks (Streets / Manholes) -->
   <div id="inspectorModal" class="modal-backdrop" style="display: none;">

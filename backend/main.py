@@ -1,4 +1,4 @@
-"""
+﻿"""
 FastAPI Backend Application - Urban Flood Nowcasting System
 Serves the two-way coupled simulation, routing API, ULB drain calibration,
 and historical validation benchmarks.
@@ -85,7 +85,7 @@ def get_system_status():
         "last_nowcast_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(state.last_run_timestamp)),
         "coupling_mode": "2-Way Surface <-> 1D Hydraulic Feedback (EPA SWMM/CA Protocol)",
         "drainage_mode": "Hybrid (Municipal GIS + Data-Sparse Auto-Inference)",
-        "ward": "Kurla-Sion Pilot Basin (Mumbai)",
+        "ward": "Sector 29-48 Pilot Basin (Gurgaon)",
         "resolution": "50m grid / Street segment scale"
     }
 
@@ -160,9 +160,9 @@ def compute_route(req: RouteRequest):
     return get_dual_mode_routes(req.start_node, req.end_node, road_depths)
 
 @app.get("/api/backtest")
-def get_backtest_results(event_id: str = "mumbai_2005"):
+def get_backtest_results(event_id: str = "gurgaon_2023"):
     if event_id not in HISTORICAL_EVENTS:
-        event_id = "mumbai_2005"
+        event_id = "gurgaon_2023"
         
     # Use the 60m peak timestep predictions for benchmark evaluation
     step_key = "60"
@@ -180,5 +180,9 @@ def get_backtest_results(event_id: str = "mumbai_2005"):
 
 # Mount frontend directory for static web files
 frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
+static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
