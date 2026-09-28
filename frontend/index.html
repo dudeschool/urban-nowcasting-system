@@ -5,28 +5,150 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JalRakshak — Urban Flood Nowcasting &amp; Emergency Routing</title>
   
-  <!-- Modern Typography: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  
-  <!-- Application CSS -->
   <link rel="stylesheet" href="css/style.css?v=logo-fit-2">
-  
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Chart.js for Hyetographs & Depth Profiles -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ── Early Warning Alert Banner ── */
+    #alertBanner {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: linear-gradient(90deg, #b91c1c, #dc2626);
+      color: #fff;
+      padding: 10px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      animation: slideDown 0.4s ease;
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to   { transform: translateY(0); }
+    }
+    #alertBanner .alert-icon { font-size: 18px; animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    #alertBanner .alert-text { flex: 1; }
+    #alertBanner .alert-close {
+      background: rgba(255,255,255,0.2);
+      border: none; color: #fff;
+      border-radius: 4px; padding: 3px 8px;
+      cursor: pointer; font-size: 12px;
+    }
+
+    /* ── AI Alert Panel in sidebar ── */
+    #ai-alert-panel {
+      background: #0f172a;
+      border: 1px solid #1e3a5f;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    #ai-alert-panel .alert-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: #f8fafc;
+      margin-bottom: 10px;
+    }
+    #ai-alert-panel .alert-panel-header .ai-badge {
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .alert-timeline { display: flex; flex-direction: column; gap: 6px; }
+    .alert-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1e293b;
+      border-radius: 7px;
+      padding: 8px 10px;
+      border-left: 3px solid #334155;
+      transition: border-color 0.3s;
+    }
+    .alert-row.safe    { border-left-color: #22c55e; }
+    .alert-row.warning { border-left-color: #f59e0b; }
+    .alert-row.danger  { border-left-color: #ef4444; }
+    .alert-row.severe  { border-left-color: #7c3aed; }
+    .alert-row .ar-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #94a3b8;
+      min-width: 42px;
+    }
+    .alert-row .ar-depth {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 52px;
+    }
+    .alert-row.safe    .ar-depth { color: #22c55e; }
+    .alert-row.warning .ar-depth { color: #f59e0b; }
+    .alert-row.danger  .ar-depth { color: #ef4444; }
+    .alert-row.severe  .ar-depth { color: #a78bfa; }
+    .alert-row .ar-label {
+      font-size: 11px;
+      color: #cbd5e1;
+      flex: 1;
+    }
+    .alert-row .ar-conf {
+      font-size: 10px;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ai-loading {
+      color: #64748b;
+      font-size: 12px;
+      text-align: center;
+      padding: 12px 0;
+      font-style: italic;
+    }
+    .ndrf-recommendation {
+      margin-top: 10px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #fca5a5;
+      display: none;
+    }
+    .ndrf-recommendation.visible { display: block; }
+    .ndrf-recommendation strong { color: #ef4444; }
+  </style>
 </head>
 <body class="light-theme">
+
+  <!-- 🚨 Global Alert Banner (appears when flood predicted) -->
+  <div id="alertBanner" style="display:none;">
+    <span class="alert-icon">🚨</span>
+    <span class="alert-text" id="alertBannerText">AI Flood Alert: Loading...</span>
+    <button class="alert-close" onclick="document.getElementById('alertBanner').style.display='none'">Dismiss</button>
+  </div>
+
   <video class="bg-ambient-video" autoplay loop muted playsinline aria-hidden="true">
     <source src="/videos/candysfiolet_pindown.io_1790539669.mp4" type="video/mp4">
   </video>
+
   <div class="app-shell">
-  <!-- Top Navigation / Command Bar -->
   <header class="top-bar">
     <div class="brand-container">
       <div class="brand-logo">
@@ -41,7 +163,6 @@
       </div>
     </div>
 
-    <!-- Live Status HUD -->
     <div class="system-status-hud">
       <div class="status-indicator active">
         <span class="pulse-dot green"></span>
@@ -57,7 +178,6 @@
       </div>
     </div>
 
-    <!-- Scenario Switcher -->
     <div class="top-actions">
       <div class="scenario-selector-wrap">
         <label for="scenarioSelect"><i data-lucide="cloud-rain"></i> Event Scenario:</label>
@@ -73,7 +193,6 @@
     </div>
   </header>
 
-  <!-- Main Workspace Layout -->
   <main class="workspace-layout">
     <aside class="left-sidebar" aria-label="Primary navigation">
       <div class="sidebar-brand brand-container">
@@ -96,11 +215,9 @@
       </nav>
     </aside>
 
-    <!-- Map Viewport -->
     <section class="map-section">
       <div id="map" class="main-map"></div>
 
-      <!-- Map Layer Controls Overlay (Top Right) -->
       <div class="map-overlay-card layer-toggles-card">
         <div class="card-header-compact">
           <i data-lucide="layers"></i> Layer Visibilities
@@ -134,7 +251,6 @@
         </div>
       </div>
 
-      <!-- Map Dynamic Legend (Bottom Left) -->
       <div class="map-overlay-card legend-card">
         <div class="legend-title">Hazard Depth Scale</div>
         <div class="legend-items">
@@ -146,7 +262,6 @@
         </div>
       </div>
 
-      <!-- Bottom Floating Timeline & Scrubber Bar -->
       <div class="timeline-scrubber-hud">
         <div class="playback-controls">
           <button id="playBtn" class="btn-icon" title="Play / Pause simulation loop">
@@ -167,10 +282,7 @@
               <span class="confidence-bar"><span id="confidenceFill" style="width: 78.5%;"></span></span>
             </span>
           </div>
-
-          <div class="step-buttons" id="stepButtonsContainer">
-            <!-- Dynamically populated step buttons (T+0, T+15, ... T+180) -->
-          </div>
+          <div class="step-buttons" id="stepButtonsContainer"></div>
         </div>
 
         <div class="quick-telemetry">
@@ -190,25 +302,19 @@
       </div>
     </section>
 
-    <!-- Side Intelligence Panel (Right) -->
     <aside class="side-panel">
-      <!-- Panel Navigation Tabs -->
       <nav class="panel-tabs">
         <button class="tab-btn active" data-tab="nowcast">
-          <i data-lucide="activity"></i>
-          <span>Live Nowcast</span>
+          <i data-lucide="activity"></i><span>Live Nowcast</span>
         </button>
         <button class="tab-btn" data-tab="routing">
-          <i data-lucide="navigation"></i>
-          <span>Safe Routing</span>
+          <i data-lucide="navigation"></i><span>Safe Routing</span>
         </button>
         <button class="tab-btn" data-tab="backtest">
-          <i data-lucide="check-circle-2"></i>
-          <span>Validation</span>
+          <i data-lucide="check-circle-2"></i><span>Validation</span>
         </button>
         <button class="tab-btn" data-tab="editor">
-          <i data-lucide="wrench"></i>
-          <span>ULB Drains</span>
+          <i data-lucide="wrench"></i><span>ULB Drains</span>
         </button>
       </nav>
 
@@ -219,7 +325,20 @@
           <span class="tag-live">Coupled 1D/2D Loop</span>
         </div>
 
-        <!-- Telemetry Cards Grid -->
+        <!-- 🤖 AI Early Warning Alert Panel -->
+        <div id="ai-alert-panel">
+          <div class="alert-panel-header">
+            <span>⚡ AI Early Warning System</span>
+            <span class="ai-badge">AI POWERED</span>
+          </div>
+          <div id="alertTimeline" class="alert-timeline">
+            <div class="ai-loading">Fetching AI flood predictions...</div>
+          </div>
+          <div class="ndrf-recommendation" id="ndrfRec">
+            <strong>🚨 NDRF Recommendation:</strong> Pre-position rescue teams at <strong>MH-07 (Sadar Bazar)</strong> and <strong>Rapid Metro Culvert</strong>. Predicted depth exceeds 25cm within T+30 min.
+          </div>
+        </div>
+
         <div class="metric-cards-grid">
           <div class="metric-card">
             <span class="metric-title">Peak Rain Intensity</span>
@@ -243,7 +362,6 @@
           </div>
         </div>
 
-        <!-- Hyetograph / Precipitation Chart -->
         <div class="panel-card">
           <div class="card-header">
             <h3><i data-lucide="cloud-lightning"></i> Ward Hyetograph (0–180 min)</h3>
@@ -254,15 +372,12 @@
           </div>
         </div>
 
-        <!-- Street Vulnerability List -->
         <div class="panel-card">
           <div class="card-header">
             <h3><i data-lucide="alert-triangle"></i> Vulnerable Street Segments</h3>
             <span class="badge-sub" id="vulnerableCount">4 Alerting</span>
           </div>
-          <div class="vulnerable-list" id="vulnerableRoadsList">
-            <!-- Dynamically populated -->
-          </div>
+          <div class="vulnerable-list" id="vulnerableRoadsList"></div>
         </div>
       </div>
 
@@ -288,7 +403,6 @@
               <option value="RIVER_CANAL_W">Najafgarh Drain West</option>
             </select>
           </div>
-
           <div class="form-group">
             <label for="routeDestination"><i data-lucide="flag"></i> Destination:</label>
             <select id="routeDestination" class="styled-select">
@@ -299,7 +413,6 @@
               <option value="EAST_RIDGE_S">East Ridge South</option>
             </select>
           </div>
-
           <div class="form-group">
             <label><i data-lucide="truck"></i> Vehicle Clearance Mode:</label>
             <div class="vehicle-toggle-group">
@@ -313,13 +426,11 @@
               </label>
             </div>
           </div>
-
           <button id="calcRouteBtn" class="btn btn-accent btn-block">
             <i data-lucide="compass"></i> Compute Flood-Safe Route
           </button>
         </div>
 
-        <!-- Route Comparison Results -->
         <div id="routeResultsCard" class="panel-card routing-result-card" style="display: none;">
           <div class="card-header">
             <h3><i data-lucide="git-merge"></i> Route Comparison</h3>
@@ -347,7 +458,7 @@
         </div>
       </div>
 
-      <!-- Tab Content 3: Historical Backtesting Validation -->
+      <!-- Tab Content 3: Validation -->
       <div class="tab-content" id="tab-backtest">
         <div class="panel-header">
           <h2>Historical Flood Validation</h2>
@@ -355,7 +466,7 @@
         </div>
         <p class="panel-desc">
           Validates the coupled nowcasting model against verified ground-truth waterlogging logs 
-          from past extreme deluge events (e.g. BMC Disaster Management & CWC reports).
+          from past extreme deluge events (e.g. BMC Disaster Management &amp; CWC reports).
         </p>
 
         <div class="backtest-selector-card">
@@ -369,7 +480,6 @@
           </button>
         </div>
 
-        <!-- Scientific Metrics Scorecard -->
         <div class="panel-card">
           <div class="card-header">
             <h3><i data-lucide="award"></i> Verification Metrics (CWC Standard)</h3>
@@ -398,7 +508,6 @@
           </div>
         </div>
 
-        <!-- Ground Truth vs Predicted Points Table -->
         <div class="panel-card">
           <div class="card-header">
             <h3><i data-lucide="list-checks"></i> Ground Truth vs Predicted Points</h3>
@@ -413,27 +522,24 @@
                   <th>Outcome</th>
                 </tr>
               </thead>
-              <tbody id="backtestTableBody">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="backtestTableBody"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab Content 4: ULB Drainage Network Calibration -->
+      <!-- Tab Content 4: ULB Drains -->
       <div class="tab-content" id="tab-editor">
         <div class="panel-header">
-          <h2>ULB Drain Network & Calibration</h2>
+          <h2>ULB Drain Network &amp; Calibration</h2>
           <span class="tag-live">Human-in-the-Loop</span>
         </div>
         <p class="panel-desc">
           Addresses the Indian Smart City reality where drain GIS is incomplete.
-          Infers missing conduits from road topology & DEM, and allows ULB engineers
+          Infers missing conduits from road topology &amp; DEM, and allows ULB engineers
           to upgrade bottleneck pipes to eliminate street surcharge!
         </p>
 
-        <!-- Bottleneck Inspector Card -->
         <div class="panel-card">
           <div class="card-header">
             <h3><i data-lucide="git-commit"></i> Drain Conduit Inspector</h3>
@@ -442,26 +548,14 @@
           <div class="pipe-editor-form">
             <div class="form-group">
               <label for="selectedPipeSelect">Select Conduit / Pipe:</label>
-              <select id="selectedPipeSelect" class="styled-select">
-                <!-- Dynamically populated -->
-              </select>
+              <select id="selectedPipeSelect" class="styled-select"></select>
             </div>
-
             <div class="pipe-details-card" id="pipeDetailsCard">
-              <div class="detail-row">
-                <span>From Manhole:</span> <strong id="pipeFrom">MH-07</strong>
-              </div>
-              <div class="detail-row">
-                <span>To Manhole:</span> <strong id="pipeTo">MH-08 (Culvert)</strong>
-              </div>
-              <div class="detail-row">
-                <span>Current Capacity:</span> <strong id="pipeCap">0.42 m³/s</strong>
-              </div>
-              <div class="detail-row">
-                <span>Capacity Utilization:</span> <strong id="pipeUtil" class="text-red">145% (Choked)</strong>
-              </div>
+              <div class="detail-row"><span>From Manhole:</span> <strong id="pipeFrom">MH-07</strong></div>
+              <div class="detail-row"><span>To Manhole:</span> <strong id="pipeTo">MH-08 (Culvert)</strong></div>
+              <div class="detail-row"><span>Current Capacity:</span> <strong id="pipeCap">0.42 m³/s</strong></div>
+              <div class="detail-row"><span>Capacity Utilization:</span> <strong id="pipeUtil" class="text-red">145% (Choked)</strong></div>
             </div>
-
             <div class="form-group" style="margin-top: 12px;">
               <label for="newPipeDiameter">Calibrate / Upgrade Diameter (mm):</label>
               <div class="slider-input-combo">
@@ -469,28 +563,20 @@
                 <span class="slider-val" id="diameterValDisplay">500 mm</span>
               </div>
             </div>
-
             <button id="applyCalibrationBtn" class="btn btn-warning btn-block">
-              <i data-lucide="check"></i> Apply Calibration & Recalculate
+              <i data-lucide="check"></i> Apply Calibration &amp; Recalculate
             </button>
           </div>
         </div>
 
-        <!-- Network Inferred Stats -->
         <div class="panel-card">
           <div class="card-header">
             <h3><i data-lucide="info"></i> Data-Sparse Inferred Links</h3>
           </div>
           <div class="inferred-stats">
-            <div class="inf-stat">
-              <span>Digitized Survey Pipes:</span> <strong>12</strong>
-            </div>
-            <div class="inf-stat">
-              <span>Auto-Inferred Pipes (DEM/Roads):</span> <strong class="text-cyan">6</strong>
-            </div>
-            <div class="inf-stat">
-              <span>Hydraulic Graph Confidence:</span> <strong class="text-green">86.4%</strong>
-            </div>
+            <div class="inf-stat"><span>Digitized Survey Pipes:</span> <strong>12</strong></div>
+            <div class="inf-stat"><span>Auto-Inferred Pipes (DEM/Roads):</span> <strong class="text-cyan">6</strong></div>
+            <div class="inf-stat"><span>Hydraulic Graph Confidence:</span> <strong class="text-green">86.4%</strong></div>
           </div>
         </div>
       </div>
@@ -498,7 +584,7 @@
   </main>
   </div>
 
-  <!-- Inspection Modal for Map Clicks (Streets / Manholes) -->
+  <!-- Inspection Modal -->
   <div id="inspectorModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card">
       <div class="modal-header">
@@ -506,9 +592,7 @@
         <button id="closeModalBtn" class="modal-close"><i data-lucide="x"></i></button>
       </div>
       <div class="modal-body">
-        <div class="modal-meta-grid" id="modalMetaGrid">
-          <!-- Dynamic meta -->
-        </div>
+        <div class="modal-meta-grid" id="modalMetaGrid"></div>
         <div class="modal-chart-wrap">
           <h4>Water Depth Profile Across 0–180 min Horizon</h4>
           <div class="chart-container" style="height: 180px;">
@@ -519,19 +603,76 @@
     </div>
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
-  <!-- Frontend Application Scripts -->
   <script src="js/map.js"></script>
   <script src="js/routing.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/backtest.js"></script>
   <script src="js/app.js"></script>
-  
+
   <script>
-    // Initialize Lucide Icons
     lucide.createIcons();
+
+    // ── AI Early Warning System ──
+    async function loadAIAlerts() {
+      const timeline = document.getElementById('alertTimeline');
+      const banner   = document.getElementById('alertBanner');
+      const bannerTxt= document.getElementById('alertBannerText');
+      const ndrfRec  = document.getElementById('ndrfRec');
+
+      try {
+        const res  = await fetch('/api/ai-flood-prediction');
+        const data = await res.json();
+        const preds = data.predictions;
+
+        const colorMap = { 'Safe': 'safe', 'Disruptive': 'warning', 'Hazardous': 'danger', 'Severe Inundation': 'severe' };
+        const emojiMap = { 'Safe': '🟢', 'Disruptive': '🟡', 'Hazardous': '🔴', 'Severe Inundation': '🟣' };
+
+        let html = '';
+        let worstDepth = 0;
+        let worstTime  = 0;
+        let worstRisk  = 'Safe';
+
+        Object.values(preds).forEach(p => {
+          const cls   = colorMap[p.risk_level] || 'safe';
+          const emoji = emojiMap[p.risk_level] || '🟢';
+          html += `
+            <div class="alert-row ${cls}">
+              <span class="ar-time">T+${p.timestep_min}m</span>
+              <span class="ar-depth">${p.predicted_depth_cm} cm</span>
+              <span class="ar-label">${emoji} ${p.risk_level}</span>
+              <span class="ar-conf">${p.ai_confidence}%</span>
+            </div>`;
+          if (p.predicted_depth_cm > worstDepth) {
+            worstDepth = p.predicted_depth_cm;
+            worstTime  = p.timestep_min;
+            worstRisk  = p.risk_level;
+          }
+        });
+
+        timeline.innerHTML = html;
+
+        // Show global banner if hazardous
+        if (worstDepth >= 25) {
+          banner.style.display = 'flex';
+          bannerTxt.textContent = `AI Flood Alert: ${worstRisk} predicted — ${worstDepth}cm depth at T+${worstTime} min. Pre-position NDRF teams now.`;
+          ndrfRec.classList.add('visible');
+        }
+
+      } catch (e) {
+        timeline.innerHTML = '<div class="ai-loading">AI prediction unavailable — API offline.</div>';
+      }
+    }
+
+    // Load alerts on page ready
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(loadAIAlerts, 1200);
+    });
+
+    // Reload alerts after nowcast reruns
+    document.getElementById('triggerNowcastBtn').addEventListener('click', () => {
+      setTimeout(loadAIAlerts, 3000);
+    });
   </script>
 </body>
 </html>
