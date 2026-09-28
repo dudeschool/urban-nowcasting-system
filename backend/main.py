@@ -17,6 +17,7 @@ from backend.data.backtest_events import HISTORICAL_EVENTS, evaluate_backtest
 from backend.models.coupling_engine import CouplingEngine
 from backend.models.drainage_network import DrainageNetworkEngine
 from backend.models.routing_engine import get_dual_mode_routes, INTERSECTIONS
+from backend.models.radar_nowcast import predict_flood_risk_ai
 
 app = FastAPI(
     title="Urban Flood Nowcasting System (MoES / NCMRWF - SIH 2026)",
@@ -159,6 +160,24 @@ def compute_route(req: RouteRequest):
         
     return get_dual_mode_routes(req.start_node, req.end_node, road_depths)
 
+@app.get("/api/ai-flood-prediction")
+def get_ai_flood_prediction():
+    if not state.cached_nowcast:
+        state.execute_nowcast()
+
+    # Generate nowcast series and extract drain utilization
+    nowcast_series = state.coupling_engine.radar_engine.generate_nowcast_series()
+    drain_util = state.cached_nowcast.get("summary", {}).get("surcharge_backflow_ls", 50) / 100.0
+    drain_util = min(max(drain_util, 0.1), 0.95)
+
+    predictions = predict_flood_risk_ai(nowcast_series, drain_utilization=drain_util)
+
+    return {
+        "status": "SUCCESS",
+        "model": "Empirical Weighted Accumulation + Drain Saturation Model",
+        "predictions": predictions
+    }
+
 @app.get("/api/backtest")
 def get_backtest_results(event_id: str = "gurgaon_2023"):
     if event_id not in HISTORICAL_EVENTS:
@@ -185,4 +204,3 @@ if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
-
