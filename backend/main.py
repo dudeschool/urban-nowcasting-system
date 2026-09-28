@@ -182,6 +182,11 @@ def get_ai_flood_prediction():
 
 @app.post("/api/nlq")
 def natural_language_query(req: NLQueryRequest):
+    import os
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not found in environment")
+    
     if not state.cached_nowcast:
         state.execute_nowcast()
 
@@ -194,32 +199,32 @@ def natural_language_query(req: NLQueryRequest):
     blocked_roads = [r for r in roads if not r.get("is_passable_ambulance", True)]
 
     context = f"""You are JalRakshak AI — an urban flood emergency assistant for Gurgaon, India.
-You have access to LIVE flood nowcast data. Answer concisely in 2-3 sentences max.
-Always mention specific road names, depths, or drain IDs where relevant.
+Answer concisely in 2-3 sentences. Mention specific road names and depths.
 
-CURRENT LIVE DATA (T+45 min forecast):
+LIVE DATA (T+45 min):
 - Scenario: {state.scenario_id}
 - Peak Rainfall: {step.get('peak_rain_rate_mmh', 'N/A')} mm/h
 - Max Flood Depth: {summary.get('max_inundation_depth_cm', 'N/A')} cm
-- Flooded Roads ({len(flooded_roads)}): {', '.join([r['name'] for r in flooded_roads[:5]])}
-- Roads Blocked to Ambulances ({len(blocked_roads)}): {', '.join([r['name'] for r in blocked_roads[:3]])}
-- Surcharging Manholes: {summary.get('surcharging_manholes', 0)}
-- Surcharge Backflow: {summary.get('total_surcharge_lps', 0)} L/s
-- Population Impacted: {summary.get('estimated_population_impacted', 0):,}
-- Ward: Sector 29-48 Pilot Basin, Gurgaon"""
+- Flooded Roads: {', '.join([r['name'] for r in flooded_roads[:5]])}
+- Blocked to Ambulances: {', '.join([r['name'] for r in blocked_roads[:3]])}
+- Surcharging Manholes: {summary.get('surcharging_manholes', 0)}"""
 
-    message = anthropic_client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=300,
-        system=context,
-        messages=[{"role": "user", "content": req.question}]
-    )
-
-    return {
-        "status": "SUCCESS",
-        "question": req.question,
-        "answer": message.content[0].text
-    }
+    try:
+        client = Anthropic(api_key=key)
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=300,
+            system=context,
+            messages=[{"role": "user", "content": req.question}]
+        )
+        return {
+            "status": "SUCCESS",
+            "question": req.question,
+            "answer": message.content[0].text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Anthropic error: {str(e)}")
+    
 @app.get("/api/test-key")
 def test_api_key():
     import os
