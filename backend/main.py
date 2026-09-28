@@ -35,8 +35,12 @@ app.add_middleware(
 )
 
 import os
-api_key = os.environ.get("ANTHROPIC_API_KEY")
-anthropic_client = Anthropic(api_key=api_key) # reads ANTHROPIC_API_KEY from environment
+api_key = (
+    os.environ.get("ANTHROPIC_API_KEY") or
+    os.environ.get("shi_key") or
+    ""
+)
+anthropic_client = Anthropic(api_key=api_key) if api_key else None # reads ANTHROPIC_API_KEY from environment
 
 class SystemState:
     def __init__(self):
@@ -210,7 +214,7 @@ LIVE DATA (T+45 min):
 - Surcharging Manholes: {summary.get('surcharging_manholes', 0)}"""
 
     try:
-        client = Anthropic(api_key=key)
+        client = Anthropic(api_key=api_key)
         message = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=300,
