@@ -34,7 +34,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-anthropic_client = Anthropic()  # reads ANTHROPIC_API_KEY from environment
+import os
+api_key = os.environ.get("ANTHROPIC_API_KEY")
+anthropic_client = Anthropic(api_key=api_key) # reads ANTHROPIC_API_KEY from environment
 
 class SystemState:
     def __init__(self):
@@ -218,7 +220,11 @@ CURRENT LIVE DATA (T+45 min forecast):
         "question": req.question,
         "answer": message.content[0].text
     }
-
+@app.get("/api/test-key")
+def test_api_key():
+    import os
+    key = os.environ.get("ANTHROPIC_API_KEY", "NOT FOUND")
+    return {"key_found": key != "NOT FOUND", "key_prefix": key[:10] if key != "NOT FOUND" else "MISSING"}
 @app.get("/api/backtest")
 def get_backtest_results(event_id: str = "gurgaon_2023"):
     if event_id not in HISTORICAL_EVENTS:
