@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* ── Early Warning Alert Banner ── */
+    /* ── Alert Banner ── */
     #alertBanner {
       display: none;
       position: fixed;
@@ -26,119 +26,108 @@
       font-family: 'Inter', sans-serif;
       font-size: 13px;
       font-weight: 600;
-      display: flex;
       align-items: center;
       gap: 12px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.4);
       animation: slideDown 0.4s ease;
     }
-    @keyframes slideDown {
-      from { transform: translateY(-100%); }
-      to   { transform: translateY(0); }
-    }
+    @keyframes slideDown { from{transform:translateY(-100%)} to{transform:translateY(0)} }
     #alertBanner .alert-icon { font-size: 18px; animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
     #alertBanner .alert-text { flex: 1; }
     #alertBanner .alert-close {
-      background: rgba(255,255,255,0.2);
-      border: none; color: #fff;
-      border-radius: 4px; padding: 3px 8px;
-      cursor: pointer; font-size: 12px;
+      background: rgba(255,255,255,0.2); border: none; color: #fff;
+      border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 12px;
     }
 
-    /* ── AI Alert Panel in sidebar ── */
+    /* ── AI Alert Panel ── */
     #ai-alert-panel {
-      background: #0f172a;
-      border: 1px solid #1e3a5f;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 14px;
+      background: #0f172a; border: 1px solid #1e3a5f;
+      border-radius: 10px; padding: 14px; margin-bottom: 14px;
     }
     #ai-alert-panel .alert-panel-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Outfit', sans-serif;
-      font-weight: 700;
-      font-size: 13px;
-      color: #f8fafc;
-      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Outfit', sans-serif; font-weight: 700;
+      font-size: 13px; color: #f8fafc; margin-bottom: 10px;
     }
-    #ai-alert-panel .alert-panel-header .ai-badge {
+    .ai-badge {
       background: linear-gradient(90deg, #6366f1, #8b5cf6);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
+      color: #fff; font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px; letter-spacing: 0.5px;
     }
     .alert-timeline { display: flex; flex-direction: column; gap: 6px; }
     .alert-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #1e293b;
-      border-radius: 7px;
-      padding: 8px 10px;
-      border-left: 3px solid #334155;
-      transition: border-color 0.3s;
+      display: flex; align-items: center; gap: 10px;
+      background: #1e293b; border-radius: 7px; padding: 8px 10px;
+      border-left: 3px solid #334155; transition: border-color 0.3s;
     }
     .alert-row.safe    { border-left-color: #22c55e; }
     .alert-row.warning { border-left-color: #f59e0b; }
     .alert-row.danger  { border-left-color: #ef4444; }
     .alert-row.severe  { border-left-color: #7c3aed; }
-    .alert-row .ar-time {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: #94a3b8;
-      min-width: 42px;
-    }
-    .alert-row .ar-depth {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      font-weight: 700;
-      min-width: 52px;
-    }
+    .ar-time { font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8; min-width:42px; }
+    .ar-depth { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; min-width:52px; }
     .alert-row.safe    .ar-depth { color: #22c55e; }
     .alert-row.warning .ar-depth { color: #f59e0b; }
     .alert-row.danger  .ar-depth { color: #ef4444; }
     .alert-row.severe  .ar-depth { color: #a78bfa; }
-    .alert-row .ar-label {
-      font-size: 11px;
-      color: #cbd5e1;
-      flex: 1;
-    }
-    .alert-row .ar-conf {
-      font-size: 10px;
-      color: #64748b;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .ai-loading {
-      color: #64748b;
-      font-size: 12px;
-      text-align: center;
-      padding: 12px 0;
-      font-style: italic;
-    }
+    .ar-label { font-size:11px; color:#cbd5e1; flex:1; }
+    .ar-conf  { font-size:10px; color:#64748b; font-family:'JetBrains Mono',monospace; }
+    .ai-loading { color:#64748b; font-size:12px; text-align:center; padding:12px 0; font-style:italic; }
     .ndrf-recommendation {
-      margin-top: 10px;
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: 7px;
-      padding: 8px 10px;
-      font-size: 11px;
-      color: #fca5a5;
-      display: none;
+      margin-top: 10px; background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3); border-radius: 7px;
+      padding: 8px 10px; font-size: 11px; color: #fca5a5; display: none;
     }
     .ndrf-recommendation.visible { display: block; }
     .ndrf-recommendation strong { color: #ef4444; }
+
+    /* ── NLQ Widget ── */
+    #nlqWidget {
+      background: #0f172a; border: 1px solid #1e3a5f;
+      border-radius: 10px; padding: 14px; margin-bottom: 14px;
+    }
+    .nlq-header {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Outfit', sans-serif; font-weight: 700;
+      font-size: 13px; color: #f8fafc; margin-bottom: 10px;
+    }
+    .nlq-chips { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .nlq-chip {
+      background: #1e293b; color: #94a3b8; font-size: 11px;
+      padding: 4px 8px; border-radius: 20px; cursor: pointer;
+      border: 1px solid #334155; transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .nlq-chip:hover { background: #334155; color: #e2e8f0; }
+    .nlq-input-row { display: flex; gap: 6px; }
+    #nlqInput {
+      flex: 1; background: #1e293b; border: 1px solid #334155;
+      border-radius: 7px; padding: 8px 12px; color: #f1f5f9;
+      font-size: 12px; outline: none; font-family: 'Inter', sans-serif;
+    }
+    #nlqInput:focus { border-color: #6366f1; }
+    #nlqBtn {
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      color: #fff; border: none; border-radius: 7px;
+      padding: 8px 16px; font-size: 12px; font-weight: 700;
+      cursor: pointer; font-family: 'Outfit', sans-serif;
+      white-space: nowrap;
+    }
+    #nlqBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+    #nlqAnswer {
+      display: none; margin-top: 10px; background: #1e293b;
+      border-radius: 7px; padding: 12px; font-size: 12px;
+      color: #cbd5e1; line-height: 1.7; border-left: 3px solid #6366f1;
+    }
+    .nlq-thinking { color: #818cf8; font-style: italic; }
+    .nlq-q { display: block; color: #64748b; font-size: 11px; margin-bottom: 6px; }
+    .nlq-a { display: block; color: #e2e8f0; font-size: 12px; line-height: 1.7; }
   </style>
 </head>
 <body class="light-theme">
 
-  <!-- 🚨 Global Alert Banner (appears when flood predicted) -->
-  <div id="alertBanner" style="display:none;">
+  <div id="alertBanner">
     <span class="alert-icon">🚨</span>
     <span class="alert-text" id="alertBannerText">AI Flood Alert: Loading...</span>
     <button class="alert-close" onclick="document.getElementById('alertBanner').style.display='none'">Dismiss</button>
@@ -162,7 +151,6 @@
         <p class="subtitle">Coupled Drainage–Rainfall Urban Flood Nowcasting &amp; Emergency Routing Platform</p>
       </div>
     </div>
-
     <div class="system-status-hud">
       <div class="status-indicator active">
         <span class="pulse-dot green"></span>
@@ -177,7 +165,6 @@
         <span class="label">Ward: <strong>Sector 29-48 Pilot Basin</strong></span>
       </div>
     </div>
-
     <div class="top-actions">
       <div class="scenario-selector-wrap">
         <label for="scenarioSelect"><i data-lucide="cloud-rain"></i> Event Scenario:</label>
@@ -187,7 +174,7 @@
           <option value="moderate_shower">Moderate Shower (32 mm/h peak)</option>
         </select>
       </div>
-      <button id="triggerNowcastBtn" class="btn btn-primary" title="Re-run coupled nowcasting loop">
+      <button id="triggerNowcastBtn" class="btn btn-primary">
         <i data-lucide="refresh-cw" id="refreshIcon"></i> Run Nowcast
       </button>
     </div>
@@ -202,10 +189,7 @@
             <path d="M9.5 15.2c.5 1.5 1.4 2.3 2.7 2.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
           </svg>
         </div>
-        <div class="brand-text">
-          <h2>JALRAKSHAK</h2>
-          <p>Command Center</p>
-        </div>
+        <div class="brand-text"><h2>JALRAKSHAK</h2><p>Command Center</p></div>
       </div>
       <nav class="sidebar-nav">
         <button class="sidebar-nav-btn active" data-tab="nowcast"><i data-lucide="activity"></i><span>Live Nowcast</span></button>
@@ -217,40 +201,16 @@
 
     <section class="map-section">
       <div id="map" class="main-map"></div>
-
       <div class="map-overlay-card layer-toggles-card">
-        <div class="card-header-compact">
-          <i data-lucide="layers"></i> Layer Visibilities
-        </div>
+        <div class="card-header-compact"><i data-lucide="layers"></i> Layer Visibilities</div>
         <div class="layer-options">
-          <label class="toggle-switch">
-            <input type="checkbox" id="layerRadar" checked>
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span class="layer-dot radar-color"></span> Doppler Radar (dBZ)</span>
-          </label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="layerFlood" checked>
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span class="layer-dot flood-color"></span> 2D Flood Inundation</span>
-          </label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="layerDrainage" checked>
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span class="layer-dot drain-color"></span> 1D Drainage Network</span>
-          </label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="layerSurcharge" checked>
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span class="layer-dot surcharge-color"></span> Surcharging Manholes</span>
-          </label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="layerRoads" checked>
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span class="layer-dot road-color"></span> Street Risk Levels</span>
-          </label>
+          <label class="toggle-switch"><input type="checkbox" id="layerRadar" checked><span class="toggle-slider"></span><span class="toggle-label"><span class="layer-dot radar-color"></span> Doppler Radar (dBZ)</span></label>
+          <label class="toggle-switch"><input type="checkbox" id="layerFlood" checked><span class="toggle-slider"></span><span class="toggle-label"><span class="layer-dot flood-color"></span> 2D Flood Inundation</span></label>
+          <label class="toggle-switch"><input type="checkbox" id="layerDrainage" checked><span class="toggle-slider"></span><span class="toggle-label"><span class="layer-dot drain-color"></span> 1D Drainage Network</span></label>
+          <label class="toggle-switch"><input type="checkbox" id="layerSurcharge" checked><span class="toggle-slider"></span><span class="toggle-label"><span class="layer-dot surcharge-color"></span> Surcharging Manholes</span></label>
+          <label class="toggle-switch"><input type="checkbox" id="layerRoads" checked><span class="toggle-slider"></span><span class="toggle-label"><span class="layer-dot road-color"></span> Street Risk Levels</span></label>
         </div>
       </div>
-
       <div class="map-overlay-card legend-card">
         <div class="legend-title">Hazard Depth Scale</div>
         <div class="legend-items">
@@ -261,71 +221,62 @@
           <div class="legend-item"><span class="swatch-ring pulse-surcharge"></span> Surcharging Backflow Point</div>
         </div>
       </div>
-
       <div class="timeline-scrubber-hud">
         <div class="playback-controls">
-          <button id="playBtn" class="btn-icon" title="Play / Pause simulation loop">
-            <i data-lucide="play" id="playIcon"></i>
-          </button>
-          <button id="resetTimeBtn" class="btn-icon" title="Reset to T+0">
-            <i data-lucide="rotate-ccw"></i>
-          </button>
+          <button id="playBtn" class="btn-icon"><i data-lucide="play" id="playIcon"></i></button>
+          <button id="resetTimeBtn" class="btn-icon"><i data-lucide="rotate-ccw"></i></button>
         </div>
-
         <div class="timeline-track-wrap">
           <div class="timeline-meta">
-            <span class="timeline-current-lead">
-              Lead Time: <strong id="leadTimeDisplay">T+45 min</strong>
-            </span>
-            <span class="timeline-confidence">
-              Radar Extrapolation Skill: <strong id="confidenceDisplay">78.5%</strong>
-              <span class="confidence-bar"><span id="confidenceFill" style="width: 78.5%;"></span></span>
+            <span class="timeline-current-lead">Lead Time: <strong id="leadTimeDisplay">T+45 min</strong></span>
+            <span class="timeline-confidence">Radar Extrapolation Skill: <strong id="confidenceDisplay">78.5%</strong>
+              <span class="confidence-bar"><span id="confidenceFill" style="width:78.5%;"></span></span>
             </span>
           </div>
           <div class="step-buttons" id="stepButtonsContainer"></div>
         </div>
-
         <div class="quick-telemetry">
-          <div class="telemetry-pill">
-            <span class="pill-label">Flooded Roads</span>
-            <span class="pill-value red" id="telemFloodedRoads">4 / 9</span>
-          </div>
-          <div class="telemetry-pill">
-            <span class="pill-label">Surcharge Backflow</span>
-            <span class="pill-value amber" id="telemSurchargeRate">1,240 L/s</span>
-          </div>
-          <div class="telemetry-pill">
-            <span class="pill-label">Max Depth</span>
-            <span class="pill-value red" id="telemMaxDepth">48.2 cm</span>
-          </div>
+          <div class="telemetry-pill"><span class="pill-label">Flooded Roads</span><span class="pill-value red" id="telemFloodedRoads">4 / 9</span></div>
+          <div class="telemetry-pill"><span class="pill-label">Surcharge Backflow</span><span class="pill-value amber" id="telemSurchargeRate">1,240 L/s</span></div>
+          <div class="telemetry-pill"><span class="pill-label">Max Depth</span><span class="pill-value red" id="telemMaxDepth">48.2 cm</span></div>
         </div>
       </div>
     </section>
 
     <aside class="side-panel">
       <nav class="panel-tabs">
-        <button class="tab-btn active" data-tab="nowcast">
-          <i data-lucide="activity"></i><span>Live Nowcast</span>
-        </button>
-        <button class="tab-btn" data-tab="routing">
-          <i data-lucide="navigation"></i><span>Safe Routing</span>
-        </button>
-        <button class="tab-btn" data-tab="backtest">
-          <i data-lucide="check-circle-2"></i><span>Validation</span>
-        </button>
-        <button class="tab-btn" data-tab="editor">
-          <i data-lucide="wrench"></i><span>ULB Drains</span>
-        </button>
+        <button class="tab-btn active" data-tab="nowcast"><i data-lucide="activity"></i><span>Live Nowcast</span></button>
+        <button class="tab-btn" data-tab="routing"><i data-lucide="navigation"></i><span>Safe Routing</span></button>
+        <button class="tab-btn" data-tab="backtest"><i data-lucide="check-circle-2"></i><span>Validation</span></button>
+        <button class="tab-btn" data-tab="editor"><i data-lucide="wrench"></i><span>ULB Drains</span></button>
       </nav>
 
-      <!-- Tab Content 1: Live Nowcast -->
+      <!-- Tab 1: Live Nowcast -->
       <div class="tab-content active" id="tab-nowcast">
         <div class="panel-header">
           <h2>Predictive Hydrology Overview</h2>
           <span class="tag-live">Coupled 1D/2D Loop</span>
         </div>
 
-        <!-- 🤖 AI Early Warning Alert Panel -->
+        <!-- 🤖 NLQ Widget -->
+        <div id="nlqWidget">
+          <div class="nlq-header">
+            🤖 Ask JalRakshak AI
+            <span class="ai-badge">LIVE DATA</span>
+          </div>
+          <div class="nlq-chips">
+            <span class="nlq-chip">Which roads flood in 30 min?</span>
+            <span class="nlq-chip">Safe to send ambulance to Sadar Bazar?</span>
+            <span class="nlq-chip">Which drain is the biggest bottleneck?</span>
+          </div>
+          <div class="nlq-input-row">
+            <input id="nlqInput" type="text" placeholder="Ask anything about the flood situation...">
+            <button id="nlqBtn">Ask</button>
+          </div>
+          <div id="nlqAnswer"></div>
+        </div>
+
+        <!-- ⚡ AI Early Warning -->
         <div id="ai-alert-panel">
           <div class="alert-panel-header">
             <span>⚡ AI Early Warning System</span>
@@ -367,9 +318,7 @@
             <h3><i data-lucide="cloud-lightning"></i> Ward Hyetograph (0–180 min)</h3>
             <span class="badge-sub">QPE vs Inundation</span>
           </div>
-          <div class="chart-container">
-            <canvas id="hyetographChart"></canvas>
-          </div>
+          <div class="chart-container"><canvas id="hyetographChart"></canvas></div>
         </div>
 
         <div class="panel-card">
@@ -381,17 +330,13 @@
         </div>
       </div>
 
-      <!-- Tab Content 2: Safe Routing -->
+      <!-- Tab 2: Safe Routing -->
       <div class="tab-content" id="tab-routing">
         <div class="panel-header">
           <h2>Flood-Safe Dynamic Navigation</h2>
           <span class="tag-emergency">Module E Engine</span>
         </div>
-        <p class="panel-desc">
-          Calculates dynamic A* routes over the city road network, penalizing edge weights in real time
-          based on predicted water depth and vehicle ground clearance.
-        </p>
-
+        <p class="panel-desc">Calculates dynamic A* routes over the city road network, penalizing edge weights in real time based on predicted water depth and vehicle ground clearance.</p>
         <div class="routing-form">
           <div class="form-group">
             <label for="routeOrigin"><i data-lucide="map-pin"></i> Origin Point:</label>
@@ -416,147 +361,87 @@
           <div class="form-group">
             <label><i data-lucide="truck"></i> Vehicle Clearance Mode:</label>
             <div class="vehicle-toggle-group">
-              <label class="radio-pill">
-                <input type="radio" name="vehicleMode" value="emergency" checked>
-                <span><i data-lucide="shield-alert"></i> Emergency (35cm)</span>
-              </label>
-              <label class="radio-pill">
-                <input type="radio" name="vehicleMode" value="commuter">
-                <span><i data-lucide="car"></i> Civilian (15cm)</span>
-              </label>
+              <label class="radio-pill"><input type="radio" name="vehicleMode" value="emergency" checked><span><i data-lucide="shield-alert"></i> Emergency (35cm)</span></label>
+              <label class="radio-pill"><input type="radio" name="vehicleMode" value="commuter"><span><i data-lucide="car"></i> Civilian (15cm)</span></label>
             </div>
           </div>
           <button id="calcRouteBtn" class="btn btn-accent btn-block">
             <i data-lucide="compass"></i> Compute Flood-Safe Route
           </button>
         </div>
-
-        <div id="routeResultsCard" class="panel-card routing-result-card" style="display: none;">
+        <div id="routeResultsCard" class="panel-card routing-result-card" style="display:none;">
           <div class="card-header">
             <h3><i data-lucide="git-merge"></i> Route Comparison</h3>
             <span id="routeStatusBadge" class="badge-success">Safe Route Active</span>
           </div>
           <div class="route-stats-grid">
-            <div class="stat-box">
-              <span class="stat-label">Safe Travel Time</span>
-              <span class="stat-val" id="routeTravelTime">8.5 min</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-label">Total Distance</span>
-              <span class="stat-val" id="routeDistance">2.4 km</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-label">Max Depth on Route</span>
-              <span class="stat-val green" id="routeMaxDepth">4.2 cm</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-label">Delay vs Dry Base</span>
-              <span class="stat-val" id="routeDelay">+1.8 min</span>
-            </div>
+            <div class="stat-box"><span class="stat-label">Safe Travel Time</span><span class="stat-val" id="routeTravelTime">8.5 min</span></div>
+            <div class="stat-box"><span class="stat-label">Total Distance</span><span class="stat-val" id="routeDistance">2.4 km</span></div>
+            <div class="stat-box"><span class="stat-label">Max Depth on Route</span><span class="stat-val green" id="routeMaxDepth">4.2 cm</span></div>
+            <div class="stat-box"><span class="stat-label">Delay vs Dry Base</span><span class="stat-val" id="routeDelay">+1.8 min</span></div>
           </div>
           <div class="route-directions" id="routeDirectionsList"></div>
         </div>
       </div>
 
-      <!-- Tab Content 3: Validation -->
+      <!-- Tab 3: Validation -->
       <div class="tab-content" id="tab-backtest">
         <div class="panel-header">
           <h2>Historical Flood Validation</h2>
           <span class="tag-validation">Scientific Evaluation</span>
         </div>
-        <p class="panel-desc">
-          Validates the coupled nowcasting model against verified ground-truth waterlogging logs 
-          from past extreme deluge events (e.g. BMC Disaster Management &amp; CWC reports).
-        </p>
-
+        <p class="panel-desc">Validates the coupled nowcasting model against verified ground-truth waterlogging logs from past extreme deluge events.</p>
         <div class="backtest-selector-card">
           <label for="backtestEventSelect">Select Historical Benchmark:</label>
           <select id="backtestEventSelect" class="styled-select">
             <option value="gurgaon_2023" selected>Gurgaon Cloudburst Deluge (July Incident Replay)</option>
             <option value="chennai_2015">Chennai Urban Micro-Burst (December 2015 Analogue)</option>
           </select>
-          <button id="runBacktestBtn" class="btn btn-primary btn-block" style="margin-top: 10px;">
+          <button id="runBacktestBtn" class="btn btn-primary btn-block" style="margin-top:10px;">
             <i data-lucide="play-circle"></i> Run Backtest Evaluation
           </button>
         </div>
-
         <div class="panel-card">
-          <div class="card-header">
-            <h3><i data-lucide="award"></i> Verification Metrics (CWC Standard)</h3>
-          </div>
+          <div class="card-header"><h3><i data-lucide="award"></i> Verification Metrics (CWC Standard)</h3></div>
           <div class="metrics-scorecard">
-            <div class="score-item">
-              <span class="score-title">Critical Success Index (CSI)</span>
-              <span class="score-value highlight" id="csiMetric">0.833</span>
-              <span class="score-hint">Threat Score (Ideal = 1.0)</span>
-            </div>
-            <div class="score-item">
-              <span class="score-title">Probability of Detection (POD)</span>
-              <span class="score-value" id="podMetric">1.000</span>
-              <span class="score-hint">Sensitivity / Recall</span>
-            </div>
-            <div class="score-item">
-              <span class="score-title">False Alarm Ratio (FAR)</span>
-              <span class="score-value green" id="farMetric">0.167</span>
-              <span class="score-hint">Lower is better</span>
-            </div>
-            <div class="score-item">
-              <span class="score-title">Overall Accuracy</span>
-              <span class="score-value" id="accMetric">83.3%</span>
-              <span class="score-hint">Hit + Correct Rejection</span>
-            </div>
+            <div class="score-item"><span class="score-title">Critical Success Index (CSI)</span><span class="score-value highlight" id="csiMetric">0.833</span><span class="score-hint">Threat Score (Ideal = 1.0)</span></div>
+            <div class="score-item"><span class="score-title">Probability of Detection (POD)</span><span class="score-value" id="podMetric">1.000</span><span class="score-hint">Sensitivity / Recall</span></div>
+            <div class="score-item"><span class="score-title">False Alarm Ratio (FAR)</span><span class="score-value green" id="farMetric">0.167</span><span class="score-hint">Lower is better</span></div>
+            <div class="score-item"><span class="score-title">Overall Accuracy</span><span class="score-value" id="accMetric">83.3%</span><span class="score-hint">Hit + Correct Rejection</span></div>
           </div>
         </div>
-
         <div class="panel-card">
-          <div class="card-header">
-            <h3><i data-lucide="list-checks"></i> Ground Truth vs Predicted Points</h3>
-          </div>
+          <div class="card-header"><h3><i data-lucide="list-checks"></i> Ground Truth vs Predicted Points</h3></div>
           <div class="backtest-table-container">
             <table class="styled-table" id="backtestTable">
-              <thead>
-                <tr>
-                  <th>Location</th>
-                  <th>Observed</th>
-                  <th>Predicted</th>
-                  <th>Outcome</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Location</th><th>Observed</th><th>Predicted</th><th>Outcome</th></tr></thead>
               <tbody id="backtestTableBody"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab Content 4: ULB Drains -->
+      <!-- Tab 4: ULB Drains -->
       <div class="tab-content" id="tab-editor">
         <div class="panel-header">
           <h2>ULB Drain Network &amp; Calibration</h2>
           <span class="tag-live">Human-in-the-Loop</span>
         </div>
-        <p class="panel-desc">
-          Addresses the Indian Smart City reality where drain GIS is incomplete.
-          Infers missing conduits from road topology &amp; DEM, and allows ULB engineers
-          to upgrade bottleneck pipes to eliminate street surcharge!
-        </p>
-
+        <p class="panel-desc">Addresses the Indian Smart City reality where drain GIS is incomplete. Infers missing conduits from road topology &amp; DEM, and allows ULB engineers to upgrade bottleneck pipes to eliminate street surcharge!</p>
         <div class="panel-card">
-          <div class="card-header">
-            <h3><i data-lucide="git-commit"></i> Drain Conduit Inspector</h3>
-            <span class="badge-sub">Click any pipe on map</span>
-          </div>
+          <div class="card-header"><h3><i data-lucide="git-commit"></i> Drain Conduit Inspector</h3><span class="badge-sub">Click any pipe on map</span></div>
           <div class="pipe-editor-form">
             <div class="form-group">
               <label for="selectedPipeSelect">Select Conduit / Pipe:</label>
               <select id="selectedPipeSelect" class="styled-select"></select>
             </div>
             <div class="pipe-details-card" id="pipeDetailsCard">
-              <div class="detail-row"><span>From Manhole:</span> <strong id="pipeFrom">MH-07</strong></div>
-              <div class="detail-row"><span>To Manhole:</span> <strong id="pipeTo">MH-08 (Culvert)</strong></div>
-              <div class="detail-row"><span>Current Capacity:</span> <strong id="pipeCap">0.42 m³/s</strong></div>
-              <div class="detail-row"><span>Capacity Utilization:</span> <strong id="pipeUtil" class="text-red">145% (Choked)</strong></div>
+              <div class="detail-row"><span>From Manhole:</span><strong id="pipeFrom">MH-07</strong></div>
+              <div class="detail-row"><span>To Manhole:</span><strong id="pipeTo">MH-08 (Culvert)</strong></div>
+              <div class="detail-row"><span>Current Capacity:</span><strong id="pipeCap">0.42 m³/s</strong></div>
+              <div class="detail-row"><span>Capacity Utilization:</span><strong id="pipeUtil" class="text-red">145% (Choked)</strong></div>
             </div>
-            <div class="form-group" style="margin-top: 12px;">
+            <div class="form-group" style="margin-top:12px;">
               <label for="newPipeDiameter">Calibrate / Upgrade Diameter (mm):</label>
               <div class="slider-input-combo">
                 <input type="range" id="newPipeDiameter" min="400" max="1800" step="50" value="500">
@@ -568,15 +453,12 @@
             </button>
           </div>
         </div>
-
         <div class="panel-card">
-          <div class="card-header">
-            <h3><i data-lucide="info"></i> Data-Sparse Inferred Links</h3>
-          </div>
+          <div class="card-header"><h3><i data-lucide="info"></i> Data-Sparse Inferred Links</h3></div>
           <div class="inferred-stats">
-            <div class="inf-stat"><span>Digitized Survey Pipes:</span> <strong>12</strong></div>
-            <div class="inf-stat"><span>Auto-Inferred Pipes (DEM/Roads):</span> <strong class="text-cyan">6</strong></div>
-            <div class="inf-stat"><span>Hydraulic Graph Confidence:</span> <strong class="text-green">86.4%</strong></div>
+            <div class="inf-stat"><span>Digitized Survey Pipes:</span><strong>12</strong></div>
+            <div class="inf-stat"><span>Auto-Inferred Pipes (DEM/Roads):</span><strong class="text-cyan">6</strong></div>
+            <div class="inf-stat"><span>Hydraulic Graph Confidence:</span><strong class="text-green">86.4%</strong></div>
           </div>
         </div>
       </div>
@@ -584,8 +466,7 @@
   </main>
   </div>
 
-  <!-- Inspection Modal -->
-  <div id="inspectorModal" class="modal-backdrop" style="display: none;">
+  <div id="inspectorModal" class="modal-backdrop" style="display:none;">
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="modalTitle">Street Segment Telemetry</h3>
@@ -595,9 +476,7 @@
         <div class="modal-meta-grid" id="modalMetaGrid"></div>
         <div class="modal-chart-wrap">
           <h4>Water Depth Profile Across 0–180 min Horizon</h4>
-          <div class="chart-container" style="height: 180px;">
-            <canvas id="modalChart"></canvas>
-          </div>
+          <div class="chart-container" style="height:180px;"><canvas id="modalChart"></canvas></div>
         </div>
       </div>
     </div>
@@ -613,63 +492,88 @@
   <script>
     lucide.createIcons();
 
-    // ── AI Early Warning System ──
+    // ── AI Early Warning ──
     async function loadAIAlerts() {
-      const timeline = document.getElementById('alertTimeline');
-      const banner   = document.getElementById('alertBanner');
-      const bannerTxt= document.getElementById('alertBannerText');
-      const ndrfRec  = document.getElementById('ndrfRec');
-
+      const timeline  = document.getElementById('alertTimeline');
+      const banner    = document.getElementById('alertBanner');
+      const bannerTxt = document.getElementById('alertBannerText');
+      const ndrfRec   = document.getElementById('ndrfRec');
       try {
-        const res  = await fetch('/api/ai-flood-prediction');
-        const data = await res.json();
+        const res   = await fetch('/api/ai-flood-prediction');
+        const data  = await res.json();
         const preds = data.predictions;
-
-        const colorMap = { 'Safe': 'safe', 'Disruptive': 'warning', 'Hazardous': 'danger', 'Severe Inundation': 'severe' };
-        const emojiMap = { 'Safe': '🟢', 'Disruptive': '🟡', 'Hazardous': '🔴', 'Severe Inundation': '🟣' };
-
-        let html = '';
-        let worstDepth = 0;
-        let worstTime  = 0;
-        let worstRisk  = 'Safe';
-
+        const colorMap = { 'Safe':'safe','Disruptive':'warning','Hazardous':'danger','Severe Inundation':'severe' };
+        const emojiMap = { 'Safe':'🟢','Disruptive':'🟡','Hazardous':'🔴','Severe Inundation':'🟣' };
+        let html = '', worstDepth = 0, worstTime = 0, worstRisk = 'Safe';
         Object.values(preds).forEach(p => {
           const cls   = colorMap[p.risk_level] || 'safe';
           const emoji = emojiMap[p.risk_level] || '🟢';
-          html += `
-            <div class="alert-row ${cls}">
-              <span class="ar-time">T+${p.timestep_min}m</span>
-              <span class="ar-depth">${p.predicted_depth_cm} cm</span>
-              <span class="ar-label">${emoji} ${p.risk_level}</span>
-              <span class="ar-conf">${p.ai_confidence}%</span>
-            </div>`;
+          html += `<div class="alert-row ${cls}">
+            <span class="ar-time">T+${p.timestep_min}m</span>
+            <span class="ar-depth">${p.predicted_depth_cm} cm</span>
+            <span class="ar-label">${emoji} ${p.risk_level}</span>
+            <span class="ar-conf">${p.ai_confidence}%</span>
+          </div>`;
           if (p.predicted_depth_cm > worstDepth) {
             worstDepth = p.predicted_depth_cm;
             worstTime  = p.timestep_min;
             worstRisk  = p.risk_level;
           }
         });
-
         timeline.innerHTML = html;
-
-        // Show global banner if hazardous
         if (worstDepth >= 25) {
           banner.style.display = 'flex';
           bannerTxt.textContent = `AI Flood Alert: ${worstRisk} predicted — ${worstDepth}cm depth at T+${worstTime} min. Pre-position NDRF teams now.`;
           ndrfRec.classList.add('visible');
         }
-
-      } catch (e) {
-        timeline.innerHTML = '<div class="ai-loading">AI prediction unavailable — API offline.</div>';
+      } catch(e) {
+        timeline.innerHTML = '<div class="ai-loading">AI prediction unavailable.</div>';
       }
     }
 
-    // Load alerts on page ready
+    // ── NLQ Widget ──
+    function setupNLQ() {
+      const input  = document.getElementById('nlqInput');
+      const btn    = document.getElementById('nlqBtn');
+      const answer = document.getElementById('nlqAnswer');
+      const chips  = document.querySelectorAll('.nlq-chip');
+
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => { input.value = chip.textContent; input.focus(); });
+      });
+
+      async function ask() {
+        const q = input.value.trim();
+        if (!q) return;
+        btn.disabled = true;
+        btn.textContent = '...';
+        answer.style.display = 'block';
+        answer.innerHTML = '<span class="nlq-thinking">🤖 JalRakshak AI is thinking...</span>';
+        try {
+          const res  = await fetch('/api/nlq', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: q })
+          });
+          const data = await res.json();
+          answer.innerHTML = `<span class="nlq-q">Q: ${data.question}</span><span class="nlq-a">${data.answer}</span>`;
+        } catch(e) {
+          answer.innerHTML = '<span style="color:#ef4444">Error reaching AI. Check API key in Vercel env vars.</span>';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Ask';
+        }
+      }
+
+      btn.addEventListener('click', ask);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(loadAIAlerts, 1200);
+      setupNLQ();
     });
 
-    // Reload alerts after nowcast reruns
     document.getElementById('triggerNowcastBtn').addEventListener('click', () => {
       setTimeout(loadAIAlerts, 3000);
     });

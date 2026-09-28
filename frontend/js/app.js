@@ -427,3 +427,56 @@ function setupModal() {
     if (e.target === modal) modal.style.display = 'none';
   });
 }
+// ── Natural Language Query Widget ──
+// Add this at the bottom of frontend/js/app.js
+
+function setupNLQWidget() {
+  const widget = document.getElementById('nlqWidget');
+  const input  = document.getElementById('nlqInput');
+  const btn    = document.getElementById('nlqBtn');
+  const answer = document.getElementById('nlqAnswer');
+  const chips  = document.querySelectorAll('.nlq-chip');
+
+  if (!widget) return;
+
+  // Suggested question chips
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      input.value = chip.textContent;
+      input.focus();
+    });
+  });
+
+  async function askQuestion() {
+    const q = input.value.trim();
+    if (!q) return;
+
+    btn.disabled = true;
+    btn.textContent = '...';
+    answer.style.display = 'block';
+    answer.innerHTML = '<span class="nlq-thinking">🤖 JalRakshak AI is thinking...</span>';
+
+    try {
+      const res = await fetch('/api/nlq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q })
+      });
+      const data = await res.json();
+      answer.innerHTML = `<span class="nlq-q">Q: ${data.question}</span><span class="nlq-a">${data.answer}</span>`;
+    } catch (e) {
+      answer.innerHTML = '<span style="color:#ef4444">Error reaching AI. Check API key.</span>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ask';
+    }
+  }
+
+  btn.addEventListener('click', askQuestion);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') askQuestion(); });
+}
+
+// Call this at the end of DOMContentLoaded in app.js
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(setupNLQWidget, 500);
+});

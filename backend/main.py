@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import os
 import time
+from anthropic import Anthropic
 
 from backend.data.sample_ward import BOUNDS, ROADS, MANHOLES, CONDUITS
 from backend.data.backtest_events import HISTORICAL_EVENTS, evaluate_backtest
@@ -25,7 +26,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for frontend interactions
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,7 +34,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global in-memory system state
+anthropic_client = Anthropic()  # reads ANTHROPIC_API_KEY from environment
+
 class SystemState:
     def __init__(self):
         self.scenario_id = "cloudburst"
@@ -45,7 +46,7 @@ class SystemState:
         )
         self.cached_nowcast = None
         self.last_run_timestamp = time.time()
-        
+
     def execute_nowcast(self, scenario: str = None):
         if scenario:
             self.scenario_id = scenario
@@ -58,7 +59,6 @@ class SystemState:
         return self.cached_nowcast
 
 state = SystemState()
-# Run initial simulation on startup
 state.execute_nowcast()
 
 # Request schemas
@@ -74,6 +74,9 @@ class RouteRequest(BaseModel):
     start_node: str = "N_HOSPITAL"
     end_node: str = "SOUTH_TERMINAL"
     timestep_min: int = 45
+
+class NLQueryRequest(BaseModel):
+    question: str
 
 # API Endpoints
 @app.get("/api/status")
@@ -132,10 +135,9 @@ def calibrate_conduit(req: CalibrateConduitRequest):
     )
     if not success:
         raise HTTPException(status_code=404, detail=f"Conduit {req.conduit_id} not found")
-        
-    # Re-run simulation with the calibrated drainage pipe
+
     state.execute_nowcast()
-    
+
     return {
         "status": "SUCCESS",
         "conduit_id": req.conduit_id,
@@ -147,17 +149,16 @@ def calibrate_conduit(req: CalibrateConduitRequest):
 
 @app.post("/api/route")
 def compute_route(req: RouteRequest):
-    # Extract road depths at the requested timestep
     step_key = str(req.timestep_min)
     if not state.cached_nowcast or step_key not in state.cached_nowcast["results"]:
         step_key = "45"
-        
+
     step_data = state.cached_nowcast["results"][step_key]
     road_depths = {r["id"]: r["max_depth_cm"] for r in step_data["roads"]}
-    
+
     if req.start_node not in INTERSECTIONS or req.end_node not in INTERSECTIONS:
         raise HTTPException(status_code=400, detail="Invalid start or destination intersection node.")
-        
+
     return get_dual_mode_routes(req.start_node, req.end_node, road_depths)
 
 @app.get("/api/ai-flood-prediction")
@@ -165,7 +166,6 @@ def get_ai_flood_prediction():
     if not state.cached_nowcast:
         state.execute_nowcast()
 
-    # Generate nowcast series and extract drain utilization
     nowcast_series = state.coupling_engine.radar_engine.generate_nowcast_series()
     drain_util = state.cached_nowcast.get("summary", {}).get("surcharge_backflow_ls", 50) / 100.0
     drain_util = min(max(drain_util, 0.1), 0.95)
@@ -178,26 +178,66 @@ def get_ai_flood_prediction():
         "predictions": predictions
     }
 
+@app.post("/api/nlq")
+def natural_language_query(req: NLQueryRequest):
+    if not state.cached_nowcast:
+        state.execute_nowcast()
+
+    tkey = "45"
+    step = state.cached_nowcast["results"].get(tkey, {})
+    summary = step.get("summary", {})
+    roads = step.get("roads", [])
+
+    flooded_roads = [r for r in roads if r.get("max_depth_cm", 0) >= 10]
+    blocked_roads = [r for r in roads if not r.get("is_passable_ambulance", True)]
+
+    context = f"""You are JalRakshak AI — an urban flood emergency assistant for Gurgaon, India.
+You have access to LIVE flood nowcast data. Answer concisely in 2-3 sentences max.
+Always mention specific road names, depths, or drain IDs where relevant.
+
+CURRENT LIVE DATA (T+45 min forecast):
+- Scenario: {state.scenario_id}
+- Peak Rainfall: {step.get('peak_rain_rate_mmh', 'N/A')} mm/h
+- Max Flood Depth: {summary.get('max_inundation_depth_cm', 'N/A')} cm
+- Flooded Roads ({len(flooded_roads)}): {', '.join([r['name'] for r in flooded_roads[:5]])}
+- Roads Blocked to Ambulances ({len(blocked_roads)}): {', '.join([r['name'] for r in blocked_roads[:3]])}
+- Surcharging Manholes: {summary.get('surcharging_manholes', 0)}
+- Surcharge Backflow: {summary.get('total_surcharge_lps', 0)} L/s
+- Population Impacted: {summary.get('estimated_population_impacted', 0):,}
+- Ward: Sector 29-48 Pilot Basin, Gurgaon"""
+
+    message = anthropic_client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=300,
+        system=context,
+        messages=[{"role": "user", "content": req.question}]
+    )
+
+    return {
+        "status": "SUCCESS",
+        "question": req.question,
+        "answer": message.content[0].text
+    }
+
 @app.get("/api/backtest")
 def get_backtest_results(event_id: str = "gurgaon_2023"):
     if event_id not in HISTORICAL_EVENTS:
         event_id = "gurgaon_2023"
-        
-    # Use the 60m peak timestep predictions for benchmark evaluation
+
     step_key = "60"
     if not state.cached_nowcast:
         state.execute_nowcast("cloudburst")
-        
+
     step_data = state.cached_nowcast["results"].get(step_key, state.cached_nowcast["results"]["45"])
     roads = step_data["roads"]
-    
+
     benchmark = evaluate_backtest(roads, event_id=event_id)
     return {
         "events_available": list(HISTORICAL_EVENTS.keys()),
         "selected_event": benchmark
     }
 
-# Mount frontend directory for static web files
+# Mount static files
 frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
 if os.path.exists(static_path):
