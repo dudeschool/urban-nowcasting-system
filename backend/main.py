@@ -8,10 +8,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional
 import os
 import time
-from anthropic import Anthropic
+
+from google import genai
+from google.genai import types
 
 from backend.data.sample_ward import BOUNDS, ROADS, MANHOLES, CONDUITS
 from backend.data.backtest_events import HISTORICAL_EVENTS, evaluate_backtest
@@ -34,13 +36,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import os
-api_key = (
-    os.environ.get("ANTHROPIC_API_KEY") or
-    os.environ.get("shi_key") or
-    ""
-)
-anthropic_client = Anthropic(api_key=api_key) if api_key else None # reads ANTHROPIC_API_KEY from environment
+# Gemini setup (key name: GEMINI_API_KEY)
+GEMINI_MODEL = "gemini-2.5-flash"
+gemini_api_key = os.environ.get("GEMINI_API_KEY", "")
+gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
+
 
 class SystemState:
     def __init__(self):
@@ -64,25 +64,31 @@ class SystemState:
         self.last_run_timestamp = time.time()
         return self.cached_nowcast
 
+
 state = SystemState()
 state.execute_nowcast()
+
 
 # Request schemas
 class TriggerNowcastRequest(BaseModel):
     scenario_id: str = "cloudburst"
+
 
 class CalibrateConduitRequest(BaseModel):
     conduit_id: str
     new_diam_mm: int
     manning_n: Optional[float] = None
 
+
 class RouteRequest(BaseModel):
     start_node: str = "N_HOSPITAL"
     end_node: str = "SOUTH_TERMINAL"
     timestep_min: int = 45
 
+
 class NLQueryRequest(BaseModel):
     question: str
+
 
 # API Endpoints
 @app.get("/api/status")
@@ -99,6 +105,7 @@ def get_system_status():
         "resolution": "50m grid / Street segment scale"
     }
 
+
 @app.get("/api/ward-info")
 def get_ward_info():
     return {
@@ -109,11 +116,13 @@ def get_ward_info():
         "intersections": INTERSECTIONS
     }
 
+
 @app.get("/api/nowcast")
 def get_nowcast():
     if not state.cached_nowcast:
         state.execute_nowcast()
     return state.cached_nowcast
+
 
 @app.post("/api/nowcast/trigger")
 def trigger_nowcast(req: TriggerNowcastRequest):
@@ -125,12 +134,14 @@ def trigger_nowcast(req: TriggerNowcastRequest):
         "data": data
     }
 
+
 @app.get("/api/network")
 def get_drainage_network():
     return {
         "nodes": list(state.drainage_engine.nodes.values()),
         "conduits": list(state.drainage_engine.conduits.values())
     }
+
 
 @app.post("/api/network/calibrate")
 def calibrate_conduit(req: CalibrateConduitRequest):
@@ -153,6 +164,7 @@ def calibrate_conduit(req: CalibrateConduitRequest):
         "new_nowcast": state.cached_nowcast
     }
 
+
 @app.post("/api/route")
 def compute_route(req: RouteRequest):
     step_key = str(req.timestep_min)
@@ -166,6 +178,7 @@ def compute_route(req: RouteRequest):
         raise HTTPException(status_code=400, detail="Invalid start or destination intersection node.")
 
     return get_dual_mode_routes(req.start_node, req.end_node, road_depths)
+
 
 @app.get("/api/ai-flood-prediction")
 def get_ai_flood_prediction():
@@ -184,13 +197,12 @@ def get_ai_flood_prediction():
         "predictions": predictions
     }
 
+
 @app.post("/api/nlq")
 def natural_language_query(req: NLQueryRequest):
-    import os
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if not key:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not found in environment")
-    
+    if gemini_client is None:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not found in environment")
+
     if not state.cached_nowcast:
         state.execute_nowcast()
 
@@ -214,26 +226,29 @@ LIVE DATA (T+45 min):
 - Surcharging Manholes: {summary.get('surcharging_manholes', 0)}"""
 
     try:
-        client = Anthropic(api_key=api_key)
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=300,
-            system=context,
-            messages=[{"role": "user", "content": req.question}]
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=req.question,
+            config=types.GenerateContentConfig(
+                system_instruction=context,
+                max_output_tokens=400,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+            ),
         )
         return {
             "status": "SUCCESS",
             "question": req.question,
-            "answer": message.content[0].text
+            "answer": response.text
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Anthropic error: {str(e)}")
-    
+        raise HTTPException(status_code=500, detail=f"Gemini error: {str(e)}")
+
+
 @app.get("/api/test-key")
 def test_api_key():
-    import os
-    key = os.environ.get("ANTHROPIC_API_KEY", "NOT FOUND")
-    return {"key_found": key != "NOT FOUND", "key_prefix": key[:10] if key != "NOT FOUND" else "MISSING"}
+    return {"key_found": bool(gemini_api_key)}
+
+
 @app.get("/api/backtest")
 def get_backtest_results(event_id: str = "gurgaon_2023"):
     if event_id not in HISTORICAL_EVENTS:
@@ -251,6 +266,7 @@ def get_backtest_results(event_id: str = "gurgaon_2023"):
         "events_available": list(HISTORICAL_EVENTS.keys()),
         "selected_event": benchmark
     }
+
 
 # Mount static files
 frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
