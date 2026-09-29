@@ -91,6 +91,131 @@ class NLQueryRequest(BaseModel):
     question: str
 
 
+# ---------------------------------------------------------------------------
+# Fallback answers (used when the Gemini key is missing or the API call fails)
+# ---------------------------------------------------------------------------
+# Last-resort static answers, used only if live nowcast data is unavailable too.
+STATIC_FALLBACK_ANSWERS = {
+    "roads_30min": (
+        "Within 30 minutes, low-lying stretches near underpasses and the main "
+        "arterial junctions in the Sector 29-48 pilot basin are most likely to "
+        "flood first, with depths building past 10 cm on the worst segments. "
+        "Avoid underpasses and use elevated roads."
+    ),
+    "ambulance_sadar_bazar": (
+        "Sadar Bazar is a high-risk segment during heavy rain. Ambulance access "
+        "is not guaranteed once water depth crosses roughly 30 cm, so dispatch "
+        "should use the alternate route suggested by the routing module and "
+        "re-check the live depth before committing."
+    ),
+    "drain_bottleneck": (
+        "The biggest bottleneck is normally the smallest-diameter conduit "
+        "downstream of a high-inflow manhole, where surcharging begins first. "
+        "Check the Network tab for surcharging nodes and consider upsizing "
+        "that conduit using the calibration tool."
+    ),
+    "generic": (
+        "The AI assistant is temporarily offline. Please check the map and "
+        "dashboard panels for live flood depths, blocked roads and surcharging "
+        "manholes."
+    ),
+}
+
+
+def _classify_question(q: str) -> str:
+    """Map a free-text question to one of the canned answer types."""
+    q = q.lower()
+    if "sadar" in q or "ambulance" in q:
+        return "ambulance_sadar_bazar"
+    if any(w in q for w in ("drain", "bottleneck", "conduit", "manhole", "pipe")):
+        return "drain_bottleneck"
+    if any(w in q for w in ("flood", "road", "30 min", "30min", "waterlog")):
+        return "roads_30min"
+    return "generic"
+
+
+def _get_step(preferred: str):
+    """Return (step_key, step_data) from the cached nowcast, or (None, {})."""
+    results = (state.cached_nowcast or {}).get("results", {})
+    for key in (preferred, "45", "60"):
+        if key in results:
+            return key, results[key]
+    return None, {}
+
+
+def build_fallback_answer(question: str) -> str:
+    """Build an answer from live simulation data, falling back to static text."""
+    kind = _classify_question(question)
+    try:
+        if kind == "roads_30min":
+            key, step = _get_step("30")
+            roads = step.get("roads", [])
+            flooded = sorted(
+                [r for r in roads if r.get("max_depth_cm", 0) >= 10],
+                key=lambda r: r.get("max_depth_cm", 0),
+                reverse=True,
+            )[:4]
+            if flooded:
+                names = ", ".join(
+                    f"{r['name']} ({r['max_depth_cm']:.0f} cm)" for r in flooded
+                )
+                return (
+                    f"At T+{key} min, the roads expected to flood are: {names}. "
+                    f"Avoid these stretches and use higher-ground alternatives."
+                )
+            if roads:
+                return (
+                    f"At T+{key} min, no road is forecast to exceed 10 cm of "
+                    f"flooding. Conditions should stay passable, but keep monitoring."
+                )
+
+        elif kind == "ambulance_sadar_bazar":
+            key, step = _get_step("45")
+            roads = step.get("roads", [])
+            match = [r for r in roads if "sadar" in r.get("name", "").lower()]
+            if match:
+                worst = max(match, key=lambda r: r.get("max_depth_cm", 0))
+                depth = worst.get("max_depth_cm", 0)
+                ok = worst.get("is_passable_ambulance", True)
+                if ok:
+                    return (
+                        f"Yes, {worst['name']} is passable for ambulances at "
+                        f"T+{key} min with about {depth:.0f} cm of water. Proceed "
+                        f"with caution and re-check the live depth before dispatch."
+                    )
+                return (
+                    f"No, do not send an ambulance via {worst['name']}. Forecast "
+                    f"depth at T+{key} min is about {depth:.0f} cm, above the safe "
+                    f"limit. Use the alternate route from the routing panel."
+                )
+
+        elif kind == "drain_bottleneck":
+            conduits = list(state.drainage_engine.conduits.values())
+            summary = (state.cached_nowcast or {}).get("results", {}).get("45", {}).get("summary", {})
+            surcharging = summary.get("surcharging_manholes")
+
+            def diam(c):
+                return c.get("diameter_mm", c.get("diam_mm", c.get("diameter", 10 ** 9)))
+
+            if conduits:
+                smallest = min(conduits, key=diam)
+                cid = smallest.get("id", smallest.get("conduit_id", "unknown"))
+                extra = (
+                    f" {surcharging} manholes are surcharging at T+45 min."
+                    if surcharging is not None else ""
+                )
+                return (
+                    f"The biggest bottleneck is conduit {cid}, the smallest "
+                    f"diameter pipe in the network ({diam(smallest)} mm).{extra} "
+                    f"Upsizing it with the calibration tool would relieve the "
+                    f"most backflow."
+                )
+    except Exception:
+        pass  # fall through to static text
+
+    return STATIC_FALLBACK_ANSWERS[kind]
+
+
 # API Endpoints
 @app.get("/api/status")
 def get_system_status():
@@ -201,11 +326,17 @@ def get_ai_flood_prediction():
 
 @app.post("/api/nlq")
 def natural_language_query(req: NLQueryRequest):
-    if gemini_client is None:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not found in environment")
-
     if not state.cached_nowcast:
         state.execute_nowcast()
+
+    # No API key configured -> serve pre-saved / data-driven answer
+    if gemini_client is None:
+        return {
+            "status": "SUCCESS",
+            "source": "fallback",
+            "question": req.question,
+            "answer": build_fallback_answer(req.question),
+        }
 
     tkey = "45"
     step = state.cached_nowcast["results"].get(tkey, {})
@@ -235,13 +366,24 @@ LIVE DATA (T+45 min):
                 max_output_tokens=800,
             ),
         )
+        answer = response.text
+        if not answer:
+            raise ValueError("Empty response from Gemini")
         return {
             "status": "SUCCESS",
+            "source": "gemini",
             "question": req.question,
-            "answer": response.text or "No answer generated. Please try again."
+            "answer": answer,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gemini error: {str(e)}")
+        # Any Gemini failure (quota, bad key, bad model name, network) -> fallback
+        print(f"[NLQ] Gemini failed, using fallback: {e}")
+        return {
+            "status": "SUCCESS",
+            "source": "fallback",
+            "question": req.question,
+            "answer": build_fallback_answer(req.question),
+        }
 
 
 @app.get("/api/test-key")
