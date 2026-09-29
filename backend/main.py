@@ -37,7 +37,8 @@ app.add_middleware(
 )
 
 # Gemini setup (key name: GEMINI_API_KEY)
-GEMINI_MODEL = "gemini-2.5-flash"
+# Model can be overridden with a GEMINI_MODEL env var in Vercel without code changes.
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 gemini_api_key = os.environ.get("GEMINI_API_KEY", "")
 gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 
@@ -231,14 +232,13 @@ LIVE DATA (T+45 min):
             contents=req.question,
             config=types.GenerateContentConfig(
                 system_instruction=context,
-                max_output_tokens=400,
-                thinking_config=types.ThinkingConfig(thinking_budget=0),
+                max_output_tokens=800,
             ),
         )
         return {
             "status": "SUCCESS",
             "question": req.question,
-            "answer": response.text
+            "answer": response.text or "No answer generated. Please try again."
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemini error: {str(e)}")
@@ -246,7 +246,7 @@ LIVE DATA (T+45 min):
 
 @app.get("/api/test-key")
 def test_api_key():
-    return {"key_found": bool(gemini_api_key)}
+    return {"key_found": bool(gemini_api_key), "model": GEMINI_MODEL}
 
 
 @app.get("/api/backtest")

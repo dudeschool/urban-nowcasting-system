@@ -427,8 +427,8 @@ function setupModal() {
     if (e.target === modal) modal.style.display = 'none';
   });
 }
+
 // ── Natural Language Query Widget ──
-// Add this at the bottom of frontend/js/app.js
 
 function setupNLQWidget() {
   const widget = document.getElementById('nlqWidget');
@@ -447,6 +447,20 @@ function setupNLQWidget() {
     });
   });
 
+  // Build the answer/error box safely (textContent avoids HTML injection)
+  function showResult(questionText, bodyText, isError) {
+    answer.innerHTML = '';
+    const qSpan = document.createElement('span');
+    qSpan.className = 'nlq-q';
+    qSpan.textContent = 'Q: ' + questionText;
+    const aSpan = document.createElement('span');
+    aSpan.className = 'nlq-a';
+    aSpan.textContent = bodyText;
+    if (isError) aSpan.style.color = '#ef4444';
+    answer.appendChild(qSpan);
+    answer.appendChild(aSpan);
+  }
+
   async function askQuestion() {
     const q = input.value.trim();
     if (!q) return;
@@ -462,10 +476,26 @@ function setupNLQWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: q })
       });
-      const data = await res.json();
-      answer.innerHTML = `<span class="nlq-q">Q: ${data.question}</span><span class="nlq-a">${data.answer}</span>`;
+
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        // response was not JSON
+      }
+
+      if (!res.ok) {
+        // FastAPI errors come back as { "detail": "..." }
+        const msg = typeof data.detail === 'string'
+          ? data.detail
+          : `Server error (${res.status})`;
+        showResult(q, 'Error: ' + msg, true);
+        return;
+      }
+
+      showResult(data.question || q, data.answer || 'No answer received.', false);
     } catch (e) {
-      answer.innerHTML = '<span style="color:#ef4444">Error reaching AI. Check API key.</span>';
+      showResult(q, 'Could not reach the server. Check your connection and try again.', true);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Ask';
@@ -476,7 +506,7 @@ function setupNLQWidget() {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') askQuestion(); });
 }
 
-// Call this at the end of DOMContentLoaded in app.js
+// Init the NLQ widget after the page loads
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(setupNLQWidget, 500);
 });
